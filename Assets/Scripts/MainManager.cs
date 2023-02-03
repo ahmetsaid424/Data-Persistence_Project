@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,17 +12,22 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text highScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
-    
+    private string hsUserName;
+    private int hsScore;
+
     private bool m_GameOver = false;
 
     
     // Start is called before the first frame update
     void Start()
     {
+        LoadHighScore();
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -70,7 +76,49 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        if (CheckIfHighScore(m_Points)) {
+            StartManager.instance.SaveHighscore(m_Points);
+        }
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    public void LoadHighScore()
+    {
+        string savePath = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(savePath))
+        {
+            string json = File.ReadAllText(savePath);
+            StartManager.SaveData saveData = JsonUtility.FromJson<StartManager.SaveData>(json);
+            hsUserName = saveData.userName;
+            hsScore = saveData.highestScore;
+            highScoreText.text = "Best Score : " + hsUserName + " : " + hsScore;
+        }
+        else
+        {
+            highScoreText.text = "Best Score : None yet" ;
+        }
+
+    }
+
+    public bool CheckIfHighScore(int score) {
+        string savePath = Application.persistentDataPath + "/savefile.json";
+
+        if(File.Exists(savePath)) {
+            string json = File.ReadAllText(savePath);
+            StartManager.SaveData saveData = JsonUtility.FromJson<StartManager.SaveData>(json);
+
+            if (saveData.highestScore > score)
+            {
+                return false;
+            }
+            else {
+                highScoreText.text = "Best Score : " + StartManager.userName + " : " + score;
+                return true;
+            }
+        
+        }
+        
+        return true;
     }
 }
